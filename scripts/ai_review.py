@@ -171,7 +171,7 @@ def render(review: dict, counts: dict, model: str) -> str:
         f"{counts['replace']} to replace, {counts['delete']} to destroy",
         f"**Risk:** {ICONS.get(risk, '')} `{risk}`",
         "",
-        review.get("summary", ""),
+        md_escape(review.get("summary", "")),
     ]
     findings = sorted(
         review.get("findings", []),
@@ -261,6 +261,9 @@ def main() -> int:
         print(f"::error::Risk level '{risk}' is at or above FAIL_ON='{fail_on}'")
         return 1
     return 0
+
+def md_escape(text: str) -> str:
+    return text.replace("*", "\\*").replace("_", "\\_")
 
 
 if __name__ == "__main__":
