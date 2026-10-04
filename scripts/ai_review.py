@@ -140,14 +140,15 @@ def ask_claude(diff: str, changes: list, model: str, language: str) -> dict:
     )
     user_msg = (
         f"<diff>\n{truncate(diff, MAX_DIFF_CHARS) or '(empty)'}\n</diff>\n\n"
-        f"<plan_changes>\n{plan_text}\n</plan_changes>"
+        f"<plan_changes>\n{plan_text}\n</plan_changes>\n\n"
+        "Review this change and call the submit_review tool with the result."
     )
     msg = client.messages.create(
         model=model,
         max_tokens=4096,
         system=SYSTEM_PROMPT.replace("{language}", language),
         tools=[REVIEW_TOOL],
-        tool_choice={"type": "tool", "name": "submit_review"},
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": user_msg}],
     )
     for block in msg.content:
