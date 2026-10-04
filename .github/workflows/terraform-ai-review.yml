@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "terraform/**"
+      - "scripts/**"
+      - "action.yml"
 
 permissions:
   contents: read
@@ -13,9 +15,6 @@ concurrency:
   group: tf-ai-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-env:
-  TF_DIR: terraform
-
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -24,35 +23,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: ./
         with:
-          terraform_wrapper: false
-
-      - name: Terraform init & plan
-        working-directory: ${{ env.TF_DIR }}
-        run: |
-          terraform init -input=false
-          terraform plan -input=false -out=tfplan
-          terraform show -json tfplan > "$GITHUB_WORKSPACE/plan.json"
-
-      - name: Collect PR diff
-        run: git diff "origin/${{ github.base_ref }}...HEAD" -- "$TF_DIR" > pr.diff
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install deps
-        run: pip install -r scripts/requirements.txt
-
-      - name: AI review
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PLAN_JSON: plan.json
-          PR_DIFF: pr.diff
-          CLAUDE_MODEL: claude-sonnet-5-5
-          REVIEW_LANGUAGE: Ukrainian
-          FAIL_ON: ""
-        run: python scripts/ai_review.py
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          working-directory: terraform
+          language: English
