@@ -140,14 +140,15 @@ def ask_claude(diff: str, changes: list, model: str, language: str) -> dict:
     )
     user_msg = (
         f"<diff>\n{truncate(diff, MAX_DIFF_CHARS) or '(empty)'}\n</diff>\n\n"
-        f"<plan_changes>\n{plan_text}\n</plan_changes>"
+        f"<plan_changes>\n{plan_text}\n</plan_changes>\n\n"
+        "Review this change and call the submit_review tool with the result."
     )
     msg = client.messages.create(
         model=model,
         max_tokens=4096,
         system=SYSTEM_PROMPT.replace("{language}", language),
         tools=[REVIEW_TOOL],
-        tool_choice={"type": "tool", "name": "submit_review"},
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": user_msg}],
     )
     for block in msg.content:
@@ -170,7 +171,7 @@ def render(review: dict, counts: dict, model: str) -> str:
         f"{counts['replace']} to replace, {counts['delete']} to destroy",
         f"**Risk:** {ICONS.get(risk, '')} `{risk}`",
         "",
-        review.get("summary", ""),
+        md_escape(review.get("summary", "")),
     ]
     findings = sorted(
         review.get("findings", []),
@@ -260,6 +261,9 @@ def main() -> int:
         print(f"::error::Risk level '{risk}' is at or above FAIL_ON='{fail_on}'")
         return 1
     return 0
+
+def md_escape(text: str) -> str:
+    return text.replace("*", "\\*").replace("_", "\\_")
 
 
 if __name__ == "__main__":
