@@ -1,0 +1,7 @@
+.terraform/
+.terraform.lock.hcl
+*.tfstate*
+tfplan
+plan.json
+pr.diff
+__pycache__/
